@@ -5,16 +5,13 @@ import imageio.v2 as imageio
 
 parser = argparse.ArgumentParser()  
 parser.add_argument("dir", help="directory with hdf5 files")
-parser.add_argument("--name", "-n", help="specific hdf5 file")
+parser.add_argument("--name", "-n", help="output file name")
 parser.add_argument("--fps", "-f", help="frames per second", default=24)
 args = parser.parse_args()
 
-os.chdir(args.dir)
+#os.chdir(args.dir)
 
-if args.name is not None:
-    timestamps, images = read_file(args.name, 'exposure')
-else:
-    timestamps, images = read_files(args.dir, 'exposures')
+timestamps, images = read_files(args.dir, 'exposures')
 
 try:
     os.mkdir("timelapses")
