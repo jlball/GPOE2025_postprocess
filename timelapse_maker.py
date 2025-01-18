@@ -19,9 +19,9 @@ parser.add_argument("--camera_name", "-cn", help="camera name to display on vide
 parser.add_argument("--output_dir", "-o", help="output directory for video", default="timelapses")
 parser.add_argument("--multiprocessing", "-mp", help="use multiprocessing", action="store_true")
 args = parser.parse_args()
-
+print("Loading image data...")
 timestamps, images = read_files(args.dir, 'exposures')
-print("Finished loading image data...")
+print("Finished loading image data.")
 
 datetimes = [datetime.fromtimestamp(ts) for ts in timestamps]
 
@@ -34,6 +34,7 @@ if args.resize is not None:
 
 font = ImageFont.truetype("Arial.ttf",args.font_size)
 
+# Function which is used to process an individual frames
 def process_image(i):
     pil_image = Image.fromarray(images[i])
 
@@ -61,8 +62,8 @@ bar = pb.ProgressBar(max_value=len(images))
 
 # Loop through all images and apply selected processing steps
 if args.multiprocessing:
+    print("Using multiprocessing...")
     with Pool() as pool:
-        #processed_images = []
         for result in bar(pool.imap(process_image, range(len(images)))):
             processed_images.append(result)
 
