@@ -14,6 +14,7 @@ parser.add_argument("--fps", "-f", help="frames per second", default=24)
 parser.add_argument("--timestamp", "-ts", help="draw timestamp on each video frame", action="store_true")
 parser.add_argument("--resize", "-r", help="resize images to this height", type=int)
 parser.add_argument("--font_size", "-fs", help="font size for timestamp", type=int, default=48)
+parser.add_argument("--camera_name", "-cn", help="camera name to display on video")
 args = parser.parse_args()
 
 timestamps, images = read_files(args.dir, 'exposures')
@@ -30,8 +31,7 @@ if args.resize is not None:
     width = np.floor(images.shape[2] * (args.resize/images.shape[1]))
     new_size = (int(width), args.resize)
 
-if args.timestamp:
-    font = ImageFont.truetype("Arial.ttf",args.font_size)
+font = ImageFont.truetype("Arial.ttf",args.font_size)
 
 # Initialize progress bar
 bar = pb.ProgressBar(max_value=len(images))
@@ -47,7 +47,17 @@ for i, image in enumerate(bar(images)):
         draw = ImageDraw.Draw(pil_image)
         text = datetimes[i].strftime('%Y-%m-%d %H:%M:%S')
         draw.text((10, 10), text, font=font, fill="white")
-        
+
+    if args.camera_name is not None:
+        if not args.timestamp:
+            draw = ImageDraw.Draw(pil_image)
+
+        text = args.camera_name
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+        position = (25, pil_image.height - text_height - 25)
+        draw.text(position, text, font=font, fill="white")
+
     processed_images.append(np.array(pil_image))
 
 images = np.array(processed_images)
@@ -57,4 +67,4 @@ try:
 except:
     pass
 
-imageio.mimsave(f'timelapses/{args.name}.mov', images, fps=args.fps)
+imageio.mimsave(f'timelapses/{args.name}.mov', images, fps=float(args.fps))
