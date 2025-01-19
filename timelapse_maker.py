@@ -19,20 +19,6 @@ parser.add_argument("--camera_name", "-cn", help="camera name to display on vide
 parser.add_argument("--output_dir", "-o", help="output directory for video", default="timelapses")
 parser.add_argument("--multiprocessing", "-mp", help="use multiprocessing", action="store_true")
 args = parser.parse_args()
-print("Loading image data...")
-timestamps, images = read_files(args.dir, 'exposures')
-print("Finished loading image data.")
-
-datetimes = [datetime.fromtimestamp(ts) for ts in timestamps]
-
-# Setup based on selected options
-processed_images = []
-
-if args.resize is not None:
-    width = np.floor(images.shape[2] * (args.resize/images.shape[1]))
-    new_size = (int(width), args.resize)
-
-font = ImageFont.truetype("Arial.ttf",args.font_size)
 
 # Function which is used to process an individual frames
 def process_image(i):
@@ -58,29 +44,53 @@ def process_image(i):
 
     return np.array(pil_image)
 
-bar = pb.ProgressBar(max_value=len(images))
+# Get a list of all HDF5 files in the specified directory.
+files = [
+        f'{args.dir}/{file}'
+        for file in os.listdir(args.dir)
+        if file[-4:] == 'hdf5' and "exposures" in file
+    ]
 
-# Loop through all images and apply selected processing steps
-if args.multiprocessing:
-    print("Using multiprocessing...")
-    with Pool() as pool:
-        for result in bar(pool.imap(process_image, range(len(images)))):
-            processed_images.append(result)
+# Loop through each file and create a timelapse out of it
+for i, file in enumerate(files):
+    print("Loading image data...")
+    timestamps, images = read_file(file, 'exposure')
+    print("Finished loading image data.")
 
-else:
-    for i, image in enumerate(bar(images)):
-        processed_images.append(process_image(i))
+    datetimes = [datetime.fromtimestamp(ts) for ts in timestamps]
 
-images = np.array(processed_images)
+    # Setup based on selected options
+    processed_images = []
 
-if args.output_dir == "timelapses" and args.camera_name is not None:
-    output_dir = args.camera_name
-else:
-    output_dir = args.output_dir
+    if args.resize is not None:
+        width = np.floor(images.shape[2] * (args.resize/images.shape[1]))
+        new_size = (int(width), args.resize)
 
-try:
-    os.mkdir(output_dir)
-except:
-    pass
+    font = ImageFont.truetype("Arial.ttf",args.font_size)
 
-imageio.mimsave(f'{output_dir}/{args.name}.mov', images, fps=float(args.fps))
+    bar = pb.ProgressBar(max_value=len(images))
+
+    # Loop through all images and apply selected processing steps
+    if args.multiprocessing:
+        print("Using multiprocessing...")
+        with Pool() as pool:
+            for result in bar(pool.imap(process_image, range(len(images)))):
+                processed_images.append(result)
+
+    else:
+        for i, image in enumerate(bar(images)):
+            processed_images.append(process_image(i))
+
+    images = np.array(processed_images)
+
+    if args.output_dir == "timelapses" and args.camera_name is not None:
+        output_dir = args.camera_name
+    else:
+        output_dir = args.output_dir
+
+    try:
+        os.mkdir(output_dir)
+    except:
+        pass
+
+    imageio.mimsave(f'{output_dir}/{args.name}_{i}.mov', images, fps=float(args.fps))
