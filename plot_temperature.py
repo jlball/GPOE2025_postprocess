@@ -3,6 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt, savgol_filter
+from scipy.interpolate import make_smoothing_spline
 
 def plot_temp_curve(folder_name, ax, color="red", filter_kernel=15, camera_name=None, derivative=False): 
     files = [
@@ -33,11 +34,23 @@ def plot_temp_curve(folder_name, ax, color="red", filter_kernel=15, camera_name=
         label = folder_name
 
     if derivative:
+        spline_fit = make_smoothing_spline(times_hrs, temps, lam=4)
+
         ax.plot(times_hrs, 
-            np.gradient(medfilt(temps, kernel_size=filter_kernel), times_hrs),
+            spline_fit.derivative()(times_hrs),
             label=label,
             color=color)
         ax.set_ylabel('Temperature rate of change (C/hr)')
+
+        # ax2 = ax.twinx()
+
+        # ax2.step(times_hrs, 
+        #     medfilt(temps, kernel_size=filter_kernel), 
+        #     where='mid', 
+        #     color='black')
+
+        # ax2.plot(times_hrs,
+        #     spline_fit(times_hrs), color="green")
 
     else:
         ax.step(times_hrs, 
