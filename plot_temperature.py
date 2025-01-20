@@ -11,8 +11,6 @@ def plot_temp_curve(folder_name, ax, color="red", filter_kernel=15, camera_name=
             if file[-3:] == 'txt' and "measurements" in file
         ]
 
-    print(f"Loaded {len(files)} files")
-
     data = np.loadtxt(files[0])
 
     timestamps = data[1:, 0]

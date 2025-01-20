@@ -15,15 +15,18 @@ parser.add_argument("--derivative", "-d", help="plot derivative of temperatures"
 
 args = parser.parse_args()
 
-cameras = ["camel", "hedgehogigrade", "petrel", "axolotl", ]
+camera_names = [
+            f'{camera}'
+            for camera in os.listdir(args.dir)
+        ]
 
 fig, ax = plt.subplots()
 
-norm = Normalize(vmin=0, vmax=len(cameras))
+norm = Normalize(vmin=0, vmax=len(camera_names))
 
 if args.derivative:
-    for i, camera in enumerate(cameras):
-        print(f"Looking in {args.dir}/{camera}")
+    for i, camera in enumerate(camera_names):
+        print("Plotting data from:", camera)
         ax = plot_temp_curve(f'{args.dir}/{camera}', 
             ax, 
             color=cm.magma(norm(i)), 
@@ -31,10 +34,11 @@ if args.derivative:
             camera_name=camera,
             derivative=True)
 
-    ax.set_ybound(lower=-10, upper=10)
+    #ax.set_ybound(lower=-10, upper=10)
+
 else:
-    for i, camera in enumerate(cameras):
-        print(f"Looking in {args.dir}/{camera}")
+    for i, camera in enumerate(camera_names):
+        print("Plotting data from:", camera)
         ax = plot_temp_curve(f'{args.dir}/{camera}', 
             ax, 
             color=cm.magma(norm(i)), 
